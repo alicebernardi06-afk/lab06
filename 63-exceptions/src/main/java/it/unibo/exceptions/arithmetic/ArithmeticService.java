@@ -55,8 +55,9 @@ public final class ArithmeticService {
      * @return the result of the process
      */
     public String process() {
+        try{
         if (commandQueue.isEmpty()) {
-            IO.println("No commands sent, no result available");
+            throw new IllegalStateException("No commands sent, no result available");
         }
         while (commandQueue.size() != 1) {
             final var nextMultiplication = commandQueue.indexOf(TIMES);
@@ -74,24 +75,28 @@ public final class ArithmeticService {
                     : max(nextSum, nextMinus);
                 if (nextOp != -1) {
                     if (commandQueue.size() < 3) {
-                        IO.println("Inconsistent operation: " + commandQueue);
+                        throw new IllegalStateException("Inconsistent operation: " + commandQueue);
                     }
                     computeAt(nextOp);
                 } else if (commandQueue.size() > 1) {
-                    IO.println("Inconsistent state: " + commandQueue);
+                    throw new IllegalStateException("Inconsistent state: " + commandQueue);
                 }
             }
         }
         final var finalResult = commandQueue.get(0);
         final var possibleException = nullIfNumberOrException(finalResult);
         if (possibleException != null) {
-            IO.println("Invalid result of operation: " + finalResult);
+            throw new IllegalStateException("Invalid result of operation: " + finalResult);
         }
         return finalResult;
+    }finally{
+        commandQueue.clear();
+    }
         /*
          * The commandQueue should be cleared, no matter what, when the method exits
          * But how?
          */
+
     }
 
     private void computeAt(final int operatorIndex) {
@@ -107,7 +112,7 @@ public final class ArithmeticService {
         final var rightOperand = commandQueue.remove(operatorIndex + 1);
         final var leftOperand = commandQueue.remove(operatorIndex - 1);
         if (KEYWORDS.contains(rightOperand) || KEYWORDS.contains(leftOperand)) {
-            IO.println(
+            throw new IllegalStateException(
                 "Expected a number, but got " + leftOperand + " and " + rightOperand + " in " + commandQueue
             );
         }
@@ -120,8 +125,8 @@ public final class ArithmeticService {
             case TIMES -> left * right;
             case DIVIDED -> left / right;
             default ->  {
-                IO.println("Unknown operand " + operand);
-                yield Double.NaN;
+                throw new IllegalStateException("Unknown operand " + operand);
+               
             }
         };
         commandQueue.set(operatorIndex - 1, Double.toString(result));
